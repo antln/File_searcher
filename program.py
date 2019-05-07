@@ -1,6 +1,9 @@
 import os
 import glob
+import collections
 
+SearchResult = collections.namedtuple('SearchResult',
+                                      'file, line, text')
 
 def main():
     header()
@@ -16,8 +19,12 @@ def main():
 
     matches = search(folder, text)
     for m in matches:
-        print(type(m))
-        print(m)
+        #print(m)
+        print('--------------MATCH---------------')
+        print('file : ' + m.file)
+        print('line: {}'.format(m.line))
+        print('match: ' + m.text.strip())
+        print()
 
     return
 
@@ -50,31 +57,37 @@ def what_string():
 
 def search(folder, text):
     # print("Would search {} for {} ".format(folder, text))
-    all_matches = []
+    #all_matches = []
     # items = os.listdir(folder)
     items = glob.glob(os.path.join(folder, '*'))
 
     for item in items:
         full_item = os.path.join(folder, item)
         if os.path.isdir(full_item):
-            continue
 
-        matches = search_files(full_item, text)
-        all_matches.extend(matches)
+            #all_matches.extend(matches)
+            yield from search(full_item, text)
+        else:
+            yield from search_files(full_item, text)
 
 
-    return all_matches
+
+    #return all_matches
 
 
 def search_files(filename, search_text):
-    matches = []
+    #matches = []
     with open(filename, 'r', encoding='utf-8') as fin:
 
+        line_num = 0
         for line in fin:
+            line_num += 1
             if line.lower().find(search_text) >= 0:
-                matches.append(line)
+                m = SearchResult(line=line_num, file=filename, text=line)
+                yield m
 
-    return matches
+
+  #  return matches
 
 if __name__ == '__main__':
     main()
